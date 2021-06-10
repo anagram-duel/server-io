@@ -43,11 +43,42 @@ io.on("connect", (socket) => {
 			});
 		}
 		io.emit("roomsRefresh", rooms);
+		socket.join(roomNumber);
+		socket.emit("roomCreated", roomNumber);
 	});
 
 	// User Load Rooms
 	socket.on("roomsFetch", () => {
 		socket.emit("roomsRefresh", rooms);
+	});
+
+	// Join Room
+	socket.on("joinRoom", (payload) => {
+		console.log(`User ${socket.id} sudah join ke room ${payload.toJoin}`);
+		if (payload.toLeave) socket.leave(payload.toLeave);
+		const currentRoomIndex = rooms.findIndex((room) =>
+			room.number === payload.toJoin ? true : false
+		);
+		if (
+			!rooms[currentRoomIndex].challenger &&
+			rooms[currentRoomIndex].hostid !== socket.id &&
+			rooms[currentRoomIndex].available
+		) {
+			rooms[currentRoomIndex].challenger = payload.name;
+			rooms[currentRoomIndex].challengerId = socket.id;
+			rooms[currentRoomIndex].available = false;
+			socket.join(payload.toJoin);
+		}
+		io.emit("roomsRefresh");
+	});
+
+	//Get Room Data
+	socket.on("getRoom", (room) => {
+		const currentRoomIndex = rooms.findIndex((r) =>
+			r.number === room ? true : false
+		);
+		console.log(rooms[currentRoomIndex]);
+		socket.to(room).emit("roomDetailRefresh", rooms[currentRoomIndex]);
 	});
 });
 
