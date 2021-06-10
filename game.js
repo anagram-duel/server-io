@@ -31,4 +31,4 @@ const guess = (playerWord, correctWord) => {
 	return guess;
 };
 
-module.exports = { generateRandomWord, guess };
+module.exports = { generateWord, guess };
