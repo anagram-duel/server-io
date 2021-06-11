@@ -30,6 +30,8 @@ io.on("connect", (socket) => {
 				word,
 				scrambleWord,
 				available: true,
+				gameEnd: false,
+				gameStart: false,
 			});
 		} else if (rooms.length > 0) {
 			roomNumber = rooms[rooms.length - 1].number + 1;
@@ -40,6 +42,8 @@ io.on("connect", (socket) => {
 				word,
 				scrambleWord,
 				available: true,
+				gameEnd: false,
+				gameStart: false,
 			});
 		}
 		io.emit("roomsRefresh", rooms);
@@ -78,6 +82,20 @@ io.on("connect", (socket) => {
 				.emit("roomDetailRefresh", rooms[currentRoomIndex]);
 		}
 		io.emit("roomsRefresh", rooms);
+	});
+
+	// Join Room
+	socket.on("gameStart", (payload) => {
+		const currentRoomIndex = rooms.findIndex((room) =>
+			room.number === payload.room ? true : false
+		);
+		const currentRoom = rooms[currentRoomIndex];
+		if (socket.id === currentRoom.hostid) {
+			currentRoom.gameStart = true;
+			io.sockets
+				.in(rooms[currentRoomIndex].number)
+				.emit("roomDetailRefresh", rooms[currentRoomIndex]);
+		}
 	});
 
 	//Submit Answer
