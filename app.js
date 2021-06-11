@@ -1,7 +1,7 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const { generateWord } = require("./game");
+const { generateWord, guess } = require("./game");
 
 let rooms = [];
 
@@ -77,16 +77,41 @@ io.on("connect", (socket) => {
 				.in(rooms[currentRoomIndex].number)
 				.emit("roomDetailRefresh", rooms[currentRoomIndex]);
 		}
-		io.emit("roomsRefresh");
+		io.emit("roomsRefresh", rooms);
 	});
 
-	//Get Room Data
-	socket.on("getRoom", (room) => {
-		const currentRoomIndex = rooms.findIndex((r) =>
-			r.number === room ? true : false
+	//Submit Answer
+	socket.on("submitAnswer", (payload) => {
+		const currentRoomIndex = rooms.findIndex((room) =>
+			room.number === payload.room ? true : false
 		);
-		console.log(rooms[currentRoomIndex], "<<<<<<<<<<<<<<<<<<<<<<");
-		socket.to(room).emit("roomDetailRefresh", rooms[currentRoomIndex]);
+		const currentRoom = rooms[currentRoomIndex];
+		const word = currentRoom.word;
+		const result = guess(payload.answer, word);
+		console.log(result);
+		if (result) {
+			if (socket.id === currentRoom.hostid) {
+				io.sockets.in(currentRoom.number).emit("gameCheck", {
+					message: `Host win ${currentRoom.hostname}`,
+					gameEnd: true,
+				});
+			} else if (socket.id === currentRoom.challengerId) {
+				io.sockets.in(currentRoom.number).emit("gameCheck", {
+					message: `Challenger win ${currentRoom.challenger}`,
+					gameEnd: true,
+				});
+			}
+			socket.leave(currentRoom.number);
+			rooms = rooms.filter((r) => {
+				return r.number !== currentRoom.number;
+			});
+			io.emit("roomsRefresh", rooms);
+		} else if (!result) {
+			socket.emit("gameCheck", {
+				message: `Wrong word`,
+				gameEnd: false,
+			});
+		}
 	});
 });
 
