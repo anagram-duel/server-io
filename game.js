@@ -33,9 +33,12 @@ const guess = (playerWord, correctWord) => {
 
 const removeWordFromRoom = (room) => {
 	// console.log(room);
-	delete room.word;
+	const newRoom = {
+		...room,
+	};
+	delete newRoom.word;
 	// console.log(room);
-	return room;
+	return newRoom;
 };
 
 const removeWordFromRooms = (rooms) => {
