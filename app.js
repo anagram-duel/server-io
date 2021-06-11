@@ -110,15 +110,17 @@ io.on("connect", (socket) => {
 		if (result) {
 			if (socket.id === currentRoom.hostid) {
 				io.sockets.in(currentRoom.number).emit("gameCheck", {
-					message: `Host win ${currentRoom.hostname}`,
+					message: `Host win: ${currentRoom.hostname}`,
 					gameEnd: true,
 				});
 			} else if (socket.id === currentRoom.challengerId) {
 				io.sockets.in(currentRoom.number).emit("gameCheck", {
-					message: `Challenger win ${currentRoom.challenger}`,
+					message: `Challenger win: ${currentRoom.challenger}`,
 					gameEnd: true,
 				});
 			}
+			currentRoom.gameEnd = true;
+			io.sockets.in(currentRoom.number).emit("roomDetailRefresh", currentRoom);
 			socket.leave(currentRoom.number);
 			rooms = rooms.filter((r) => {
 				return r.number !== currentRoom.number;
