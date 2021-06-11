@@ -44,7 +44,12 @@ io.on("connect", (socket) => {
 		}
 		io.emit("roomsRefresh", rooms);
 		socket.join(roomNumber);
-		socket.emit("roomCreated", roomNumber);
+
+		const currentRoomIndex = rooms.findIndex((room) =>
+			room.number === roomNumber ? true : false
+		);
+		console.log(rooms[currentRoomIndex]);
+		io.sockets.in(roomNumber).emit("roomCreated", rooms[currentRoomIndex]);
 	});
 
 	// User Load Rooms
@@ -68,6 +73,9 @@ io.on("connect", (socket) => {
 			rooms[currentRoomIndex].challengerId = socket.id;
 			rooms[currentRoomIndex].available = false;
 			socket.join(payload.toJoin);
+			io.sockets
+				.in(rooms[currentRoomIndex].number)
+				.emit("roomDetailRefresh", rooms[currentRoomIndex]);
 		}
 		io.emit("roomsRefresh");
 	});
@@ -77,7 +85,7 @@ io.on("connect", (socket) => {
 		const currentRoomIndex = rooms.findIndex((r) =>
 			r.number === room ? true : false
 		);
-		console.log(rooms[currentRoomIndex]);
+		console.log(rooms[currentRoomIndex], "<<<<<<<<<<<<<<<<<<<<<<");
 		socket.to(room).emit("roomDetailRefresh", rooms[currentRoomIndex]);
 	});
 });
