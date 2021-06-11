@@ -1,7 +1,12 @@
 const express = require("express");
 const app = express();
 const port = process.env.PORT || 3000;
-const { generateWord, guess } = require("./game");
+const {
+	generateWord,
+	guess,
+	removeWordFromRooms,
+	removeWordFromRoom,
+} = require("./game");
 
 let rooms = [];
 
@@ -46,19 +51,21 @@ io.on("connect", (socket) => {
 				gameStart: false,
 			});
 		}
-		io.emit("roomsRefresh", rooms);
+		io.emit("roomsRefresh", removeWordFromRooms(rooms));
 		socket.join(roomNumber);
 
 		const currentRoomIndex = rooms.findIndex((room) =>
 			room.number === roomNumber ? true : false
 		);
 		console.log(rooms[currentRoomIndex]);
-		io.sockets.in(roomNumber).emit("roomCreated", rooms[currentRoomIndex]);
+		io.sockets
+			.in(roomNumber)
+			.emit("roomCreated", removeWordFromRoom(rooms[currentRoomIndex]));
 	});
 
 	// User Load Rooms
 	socket.on("roomsFetch", () => {
-		socket.emit("roomsRefresh", rooms);
+		socket.emit("roomsRefresh", removeWordFromRooms(rooms));
 	});
 
 	// Join Room
@@ -79,9 +86,9 @@ io.on("connect", (socket) => {
 			socket.join(payload.toJoin);
 			io.sockets
 				.in(rooms[currentRoomIndex].number)
-				.emit("roomDetailRefresh", rooms[currentRoomIndex]);
+				.emit("roomDetailRefresh", removeWordFromRoom(rooms[currentRoomIndex]));
 		}
-		io.emit("roomsRefresh", rooms);
+		io.emit("roomsRefresh", removeWordFromRooms(rooms));
 	});
 
 	// Join Room
@@ -94,7 +101,7 @@ io.on("connect", (socket) => {
 			currentRoom.gameStart = true;
 			io.sockets
 				.in(rooms[currentRoomIndex].number)
-				.emit("roomDetailRefresh", rooms[currentRoomIndex]);
+				.emit("roomDetailRefresh", removeWordFromRoom(rooms[currentRoomIndex]));
 		}
 	});
 
@@ -120,12 +127,14 @@ io.on("connect", (socket) => {
 				});
 			}
 			currentRoom.gameEnd = true;
-			io.sockets.in(currentRoom.number).emit("roomDetailRefresh", currentRoom);
+			io.sockets
+				.in(currentRoom.number)
+				.emit("roomDetailRefresh", removeWordFromRoom(currentRoom));
 			socket.leave(currentRoom.number);
 			rooms = rooms.filter((r) => {
 				return r.number !== currentRoom.number;
 			});
-			io.emit("roomsRefresh", rooms);
+			io.emit("roomsRefresh", removeWordFromRooms(rooms));
 		} else if (!result) {
 			socket.emit("gameCheck", {
 				message: `Wrong word`,

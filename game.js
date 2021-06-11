@@ -31,4 +31,22 @@ const guess = (playerWord, correctWord) => {
 	return guess;
 };
 
-module.exports = { generateWord, guess };
+const removeWordFromRoom = (room) => {
+	// console.log(room);
+	delete room.word;
+	// console.log(room);
+	return room;
+};
+
+const removeWordFromRooms = (rooms) => {
+	return rooms.map((room) => {
+		return removeWordFromRoom(room);
+	});
+};
+
+module.exports = {
+	generateWord,
+	guess,
+	removeWordFromRoom,
+	removeWordFromRooms,
+};
